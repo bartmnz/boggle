@@ -1,6 +1,8 @@
 #!usr/bin/python3
 
 import threading
+import random
+import time
 
 exitFlag = 0
 
@@ -188,42 +190,45 @@ class myThread(threading.Thread):
         #self.name = name
         self.solutions = solutions #list(solutions)
     def run(self):
-        import random
-        import time
-        end = time.time()+60
-        while (time.time() < end):
+        DELAY = 60
+        while (not exit_flag.is_set()):
             time.sleep(10)
             choice = random.sample(self.solutions, 1)
             print()
             print (*choice)
             self.solutions.remove(*choice)
+        # exit_flag.set()
 
 class userInput(threading.Thread):
     def __init__(self, solutions):
         threading.Thread.__init__(self)
         self.solutions = solutions
     def run(self):
-        import time
-        end = time.time()+60
-        while (time.time() < end):
+        DELAY = 60
+        while (not exit_flag.is_set()):
             guess = input('guess:')
             if guess in solutions:
+                solutions.remove(guess)
                 print ('good!')
             else:
                 print( 'nope')
+    
 
 if __name__ == "__main__":
     board = make_board()
     solutions = solver(board)
-   
+    
     #try:
     for s in solutions:
         print(s, end = ' ')
     print()
+    exit_flag = threading.Event()
     thread1 = myThread( solutions)
     thread2 = userInput( solutions)
     thread1.start()
     thread2.start()
+    time.sleep(10)
+    exit_flag.set()
     #except:
     #   print("didn't work")
     
