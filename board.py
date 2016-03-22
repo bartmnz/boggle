@@ -62,15 +62,19 @@ def make_board():
         x = random.randint(0,5)
         value = dice[y]
         value = value[x]
-        if value == 'q':
-            value = 'qu'
+        # if value == 'q':
+        #     value = 'qu'
         if y == len(dice) -1:
             value = value.upper()
-        board += [str(value)]
+        board += value
         y += 1
     count = 0 
     for letter in board:
-        print(letter + " ", end=" ")
+        if letter.lower() == 'q':
+            print ( 'Qu', end = '  ' )
+        else:
+            print(letter + " ", end="  ")
+        
         if count == 4:
             print()
             count = -1
@@ -147,6 +151,8 @@ def solver(board):
     def solve():
         for y, row in enumerate(grid):
             for x, letter in enumerate(row):
+                if ( letter.lower() == 'q'):
+                    letter +='u'
                 for result in extending(letter, ((x, y),)):
                     yield result
     
@@ -156,6 +162,10 @@ def solver(board):
         for (nx, ny) in neighbors(*path[-1]):
             if (nx, ny) not in path:
                 prefix1 = prefix + grid[ny][nx]
+                if grid[ny][nx].lower() == 'q':
+                    
+                    prefix1 += 'u'
+                    #print(prefix1)
                 if prefix1 in prefixes:
                     for result in extending(prefix1, path + ((nx, ny),)):
                         yield result
@@ -207,6 +217,9 @@ if __name__ == "__main__":
     solutions = solver(board)
    
     #try:
+    for s in solutions:
+        print(s, end = ' ')
+    print()
     thread1 = myThread( solutions)
     thread2 = userInput( solutions)
     thread1.start()
