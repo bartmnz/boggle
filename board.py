@@ -8,6 +8,7 @@ def check_dictionary(word, s):
    
    if word in s:
        print(word)
+       print('changed2')
    return word in s
    
 def valid_sub_string(word):
