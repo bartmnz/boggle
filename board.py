@@ -1,4 +1,4 @@
-#!usr/bin/python3
+#!/usr/bin/python3
 
 import threading
 
@@ -72,7 +72,7 @@ def make_board():
     count = 0 
     for letter in board:
         if letter.lower() == 'q':
-            print ( 'Qu', end = '  ' )
+            print ("Qu", end= "  ") 
         else:
             print(letter + " ", end="  ")
         
@@ -143,7 +143,7 @@ def solver(board):
     alphabet = ''.join(set(''.join(grid)))
     bogglable = re.compile('[' + alphabet + ']{3,}$', re.I).match
     
-    words = set(word.rstrip('\n') for word in open('./words2.txt') if bogglable(word))
+    words = set(word.rstrip('\n') for word in open('/usr/share/dict/words') if bogglable(word))
     prefixes = set(word[:i] for word in words
                    for i in range(2, len(word)+1))
     
@@ -213,18 +213,18 @@ class userInput(threading.Thread):
             else:
                 print( 'nope')
 
-if __name__ == "__main__":
-    board = make_board()
-    solutions = solver(board)
-   
-    #try:
-    for s in solutions:
-        print(s, end = ' ')
-    print()
-    thread1 = myThread( solutions)
-    thread2 = userInput( solutions)
-    thread1.start()
-    thread2.start()
+# if __name__ == "__main__":
+#     board = make_board()
+#     solutions = solver(board)
+#    
+#     #try:
+#     for s in solutions:
+#         print(s, end = ' ')
+#     print()
+#     thread1 = myThread( solutions)
+#     thread2 = userInput( solutions)
+#     thread1.start()
+#     thread2.start()
     #except:
     #   print("didn't work")
     
