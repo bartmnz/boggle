@@ -7,10 +7,11 @@ import queue
 class GuiPart:  
     
     def __init__(self, win, line, endCommand, board, solutions):
+        self.master = win
         self.line = line
         self.solutions = solutions
         frame1 = Frame(win)
-        frame1.pack()
+        #frame1.pack()
         
         buttons = []
         for letter in board:
@@ -35,27 +36,43 @@ class GuiPart:
         
         
         frame2 = Frame(win)
-        frame2.pack()
+        #frame2.pack()
         v = StringVar()
-        e = Entry(frame2, textvariable =v)
+        self.e = Entry(frame2, textvariable =v)
         def func(event):
-            global e
-            global solutions
-            value = e.get()
+            value = self.e.get()
             if value in self.solutions:
-                print('good')
-            e.delete(0, 'end')
+                self.userWords.insert(END, value)
+            self.e.delete(0, 'end')
             print(value)
-        e.bind('<Return>', func)
-        e.pack()
+        self.e.bind('<Return>', func)
+        self.e.pack()
+        self.e.focus_set()
         
         frame3 = Frame(win)
-        frame3.pack()
+        #frame3.pack()
         scroll = Scrollbar(frame3, orient=VERTICAL)
-        self.select = Listbox(frame3, height= 4)
+        self.select = Listbox(frame3, height= 9)
         
         #elect.configure(anchor= CENTER)
         self.select.pack()
+        
+        frame4 = Frame(win)
+        #frame4.pack()
+        self.timeLeft = 180
+        self.clock = Label(frame4, text= self.timeLeft)
+        self.clock.pack()
+        
+        frame5 = Frame(win)
+        #frame5.pack()
+        self.userWords = Listbox(frame5, height= 9)
+        self.userWords.pack()
+        frame1.grid(row = 1, column = 1)
+        frame2.grid(row = 2, column = 1)
+        frame3.grid(row = 1, column = 2)
+        frame4.grid(row = 0, column = 1)
+        frame5.grid(row = 1, column = 0)
+        
     def processUpdate(self):
         while self.line.qsize():
             try:
@@ -63,9 +80,16 @@ class GuiPart:
                 self.select.insert(END, msg)
             except queue.Empty:
                 pass
-        
-
     
+    
+    
+   
+    def countDown(self):
+        self.clock.configure(text= self.timeLeft)
+        self.timeLeft -= 1
+            #self.master.after(1000, self.countDown())
+    
+
 
 class threadedClient:
     def __init__(self, master):
@@ -76,8 +100,10 @@ class threadedClient:
         self.gui = GuiPart(master, self.line, self.endApplication, self.board, self.solutions)
         self.running = 1
         self.thread1 = threading.Thread(target = self.aiThread1)
+        self.thread2 = threading.Thread(target = self.clockThread2)
         self.thread1.start()
-        
+        self.thread2.start()
+        self.gui.countDown()
         self.updateList()
         
     def updateList(self):
@@ -93,14 +119,30 @@ class threadedClient:
             import random
             rValue = random.sample(self.solutions, 1)
             self.line.put(rValue)
-            
+    
+    def clockThread2(self):
+        while self.running:
+            self.gui.countDown()
+            time.sleep(1)
+        
+    
     def endApplication(self):
         self.running = 0
+        self.thread1.join(timeout= None)
+        self.thread2.join(timeout= None)
+        
         
 def main():
     win = Tk()
     ai = threadedClient(win)
+    
+    def on_closing():
+        ai.endApplication()
+        win.destroy()
+    win.protocol("WM_DELETE_WINDOW", on_closing)
+    win.wm_title("Boggle")
     mainloop()
+    ai.endApplication()
 
 if __name__ == "__main__":
     main()  
