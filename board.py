@@ -58,6 +58,7 @@ def make_board():
             'iprrry',
             'nootuw',
             'ooottu',
+            'qqqqqq', # test
             'iklmqu']
     
     import random
@@ -75,8 +76,8 @@ def make_board():
         value = value[x]
         # if value == 'q':
         #     value = 'qu'
-        if y == len(dice) -1:
-            value = value.upper()
+        #if y == len(dice) -1:
+        #    value = value.upper()
         board += value
         y += 1
     count = 0 
@@ -150,7 +151,11 @@ def solver(board):
     # A dictionary word that could be a solution must use only the grid's
     # letters and have length >= 3. (With a case-insensitive match.)
     import re
+    
     alphabet = ''.join(set(''.join(grid)))
+    if 'q' in alphabet:
+        alphabet += 'u'
+        print(alphabet)
     bogglable = re.compile('[' + alphabet + ']{3,}$', re.I).match
     
     words = set(word.rstrip('\n') for word in open('/usr/share/dict/words') if bogglable(word))
@@ -174,9 +179,7 @@ def solver(board):
             if (nx, ny) not in path:
                 prefix1 = prefix + grid[ny][nx]
                 if grid[ny][nx].lower() == 'q':
-                    
                     prefix1 += 'u'
-                    #print(prefix1)
                 if prefix1 in prefixes:
                     for result in extending(prefix1, path + ((nx, ny),)):
                         yield result
