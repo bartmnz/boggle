@@ -12,7 +12,7 @@ class GuiPart:
         self.solutions = solutions
         self.user_points = 0
         self.cpu_points = 0
-        #self.lock = lock
+        self.lock = threading.Lock()
         frame1 = Frame(win)
         #frame1.pack()
         
@@ -48,12 +48,15 @@ class GuiPart:
         v = StringVar()
         self.e = Entry(frame1, textvariable =v)
         def func(event):
-            value = self.e.get()
-            if value in self.solutions:
-                self.userWords.insert(END, value)
-                self.user_points += game.score_word(value, self.solutions)
-                self.user_score.config(text= self.user_points)
-            self.e.delete(0, 'end')
+            with self.lock:
+                value = self.e.get()
+                if value in self.solutions:
+                    self.userWords.insert(END, value)
+                    self.user_points += game.score_word(value, self.solutions)
+                    self.solutions.remove(value)
+                    self.user_score.config(text= self.user_points)
+                self.e.delete(0, 'end')
+            
             #print(value)
         self.e.bind('<Return>', func)
         self.e.grid(row= 5, columnspan= 4)
@@ -86,15 +89,17 @@ class GuiPart:
         frame5.grid(row = 1, column = 0)
         
     def processUpdate(self):
-        while self.line.qsize():
-            try:
-                msg = self.line.get(0)
-                self.select.insert(END, msg)
-                result = game.score_word(*msg, self.solutions)
-                self.cpu_points += result
-                self.cpu_score.config(text= self.cpu_points)
-            except queue.Empty:
-                pass
+        with self.lock:
+            while self.line.qsize():
+                try:
+                    msg = self.line.get(0)
+                    self.select.insert(END, msg)
+                    result = game.score_word(*msg, self.solutions)
+                    self.cpu_points += result
+                    self.cpu_score.config(text= self.cpu_points)
+                    self.solutions.remove(*msg)
+                except queue.Empty:
+                    pass
     
     
     
