@@ -4,12 +4,22 @@ import threading
 
 exitFlag = 0
 
-def check_dictionary(word, s):
+def score_word(word, s):
    
    if word in s:
-       print(word)
-       print('changed2')
-   return word in s
+       score= len(word)
+       if score >= 8:
+           return 11
+       elif score == 7:
+           return 5
+       elif score == 6:
+           return 3
+       elif score == 5:
+           return 2
+       else:
+           return 1 
+   else:
+       return 0
    
 def valid_sub_string(word):
     import re
