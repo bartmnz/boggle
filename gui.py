@@ -1,9 +1,12 @@
 from tkinter import *
+import tkinter.font
+from tkinter import messagebox
 import board as game
 import time
 import threading
 import queue
 from tkinter import Scrollbar
+
 
 class GuiPart:  
     
@@ -15,6 +18,7 @@ class GuiPart:
         self.board = board
         self.cpu_points = 0
         self.lock = threading.Lock()
+        self.customFont = tkinter.font.Font(family ="Helvetica", size = 12)
         self.frame1 = Frame(win)
         #frame1.pack()
         self.make_buttons()
@@ -29,6 +33,7 @@ class GuiPart:
         self.frame1.grid(row = 1, column = 1)
         self.frame3.grid(row = 1, column = 2)
         self.frame5.grid(row = 1, column = 0)
+        
         
         
     def make_user(self):
@@ -51,6 +56,7 @@ class GuiPart:
         self.select.grid(row = 0)
         self.cpu_score.grid(row = 1)   
         
+        
     def make_input(self):
         v = StringVar()
         self.e = Entry(self.frame1, textvariable =v)
@@ -61,12 +67,12 @@ class GuiPart:
     
     
     def make_timer(self):
-        self.timeLeft = 180
+        self.timeLeft = 18
         self.clock = Label(self.frame1, text= self.timeLeft)
         self.clock.grid(row= 0, columnspan= 4)
             
     def make_buttons(self):
-        buttons = []
+        self.buttons = []
         for letter in self.board:
             value = ''
             if letter.lower() == 'q':
@@ -74,13 +80,13 @@ class GuiPart:
             elif letter == ' ':
                 continue
             else:
-                value = letter
+                value = letter.upper()
                 
-            but = Button(self.frame1, text = value, height= 3, width = 3)
-            buttons.append(but)
+            but = Button(self.frame1, text = value, height= 3, width = 3, font = self.customFont)
+            self.buttons.append(but)
             y = 1
             x = 0
-            for button in buttons:
+            for button in self.buttons:
                 button.grid(row = y, column = x)
                 x += 1
                 if x == 4:
@@ -88,8 +94,10 @@ class GuiPart:
                     y += 1
     
     def func(self, event):
+        if self.timeLeft:
             with self.lock:
                 value = self.e.get()
+                value = value.lower()
                 try:
                     if value in self.solutions:
                         self.userWords.insert(END, value)
@@ -100,6 +108,7 @@ class GuiPart:
                     # all words have been found
                     pass
                 self.e.delete(0, 'end')
+            
                 
     def processUpdate(self):
         with self.lock:
@@ -118,11 +127,25 @@ class GuiPart:
         self.clock.configure(text= self.timeLeft)
         self.timeLeft -= 1
         if self.timeLeft < 0:
+            self.e.configure(state = 'disabled')
             return False
         else:
             return True
             #self.master.after(1000, self.countDown())
     
+    def reset(self, board, solutions):
+        self.timeLeft = 180
+        self.board = board
+        self.solutions = solutions
+        self.make_buttons()
+        self.user_points = 0
+        self.cpu_points = 0
+        self.cpu_score.config(text= self.cpu_points)
+        self.user_score.config(text= self.user_points)
+        self.e.configure(state = 'normal')
+        
+            
+        
 
 
 class threadedClient:
@@ -131,6 +154,7 @@ class threadedClient:
         self.board = game.make_board()
         self.solutions = game.solver(self.board)
         self.line = queue.Queue()
+        self.timer = False
         self.gui = GuiPart(master, self.line, self.board, self.solutions)
         self.running = 1
         self.exit_flag = threading.Event()
@@ -139,23 +163,33 @@ class threadedClient:
         self.thread1.start()
         self.thread2.start()
         self.gui.countDown()
-        self.updateList()
+        self.updateGUI()
         
-    def updateList(self):
+    def updateGUI(self):
         self.gui.processUpdate()
+        if self.timer:
+            self.running = self.gui.countDown()
+            self.timer = False
+            
         if not self.running:
-            import sys
-            sys.exit(1)
-        self.master.after(100, self.updateList)
+            self.exit_flag.set()
+            again = messagebox.askyesno("Continue", "Play again?")
+            if not again:
+                self.endApplication()
+                sys.exit(0)
+            self.reset()
+        self.master.after(100, self.updateGUI)
         
     def aiThread1(self):            
         DELAY = 10
         while not self.exit_flag.wait(timeout=DELAY):
+            print(self.exit_flag)
             #time.sleep(10)
             import random
             try:
                 rValue = random.sample(self.solutions, 1)
                 self.line.put(rValue)
+                self.gui.processUpdate()
             except ValueError:
                 #all values have been found
                 pass
@@ -163,11 +197,20 @@ class threadedClient:
     def clockThread2(self):
         DELAY = 1
         while not self.exit_flag.wait(timeout=DELAY):
-            if not self.gui.countDown():
-                self.exit_flag.set()
-            
-            #time.sleep(1)
+            self.timer = True
         
+               
+            #time.sleep(1)
+    def reset(self):
+        self.running = True
+        self.board = game.make_board()
+        self.solutions = game.solver(self.board)
+        self.gui.reset(self.board, self.solutions)
+        self.exit_flag.clear()
+        self.thread1 = threading.Thread(target = self.aiThread1)
+        self.thread2 = threading.Thread(target = self.clockThread2)
+        self.thread1.start()
+        self.thread2.start()
     
     def endApplication(self):
         self.running = 0
