@@ -143,6 +143,8 @@ class GuiPart:
         self.cpu_score.config(text= self.cpu_points)
         self.user_score.config(text= self.user_points)
         self.e.configure(state = 'normal')
+        self.select.delete(0,END)
+        self.userWords.delete(0,END)
         
             
         
