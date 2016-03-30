@@ -178,24 +178,39 @@ class threadedClient:
                 
             if not self.running:
                 self.exit_flag.set()
-                again = messagebox.askyesno("Continue", "Play again?")
-                if not again:
+                message = ''
+                if self.gui.timeLeft:
+                    message += "All words found. "
+                if self.gui.user_points > self.gui.cpu_points:
+                    message += "You WON!!"
+                else:
+                    message += "You LOST"
+                message += " Play again?"
+                print (message)
+                if not messagebox.askyesno("Continue", message):
                     self.endApplication()
                     sys.exit(0)
                 self.reset()
             self.master.after(100, self.updateGUI)
         
     def aiThread1(self):            
-        DELAY = 10
+        DELAY = 1
         while not self.exit_flag.wait(timeout=DELAY):
             #time.sleep(10)
             with self.lock:
                 try:
                     rValue = random.sample(self.solutions, 1)
+                    print (rValue)
+                    if not len(self.solutions):
+                        if messagebox.askyesno("Continue", "All matches found. Play again?"):
+                           self.reset()
+                        self.endApplication()
+                        sys.exit(0)
                     self.line.put(rValue)
                     self.gui.processUpdate()
                 except ValueError:
                     #all values have been found
+                    self.running = 0
                     pass
     
     def clockThread2(self):
