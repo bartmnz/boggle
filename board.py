@@ -4,7 +4,7 @@ import threading
 
 exitFlag = 0
 
-def score_word(word, s):
+def score_word(s, word):
    
    if word in s:
        score= len(word)

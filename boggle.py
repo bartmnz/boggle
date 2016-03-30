@@ -3,7 +3,7 @@
 #stackoverflow.com/questions/4465052
 
 import sys
-req_version = (3,5)
+req_version = (3,0)
 cur_version = sys.version_info
 
 if cur_version >= req_version:

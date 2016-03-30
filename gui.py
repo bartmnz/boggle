@@ -5,6 +5,7 @@ import board as game
 import time
 import threading
 import queue
+import random
 from tkinter import Scrollbar
 
 
@@ -67,7 +68,7 @@ class GuiPart:
     
     
     def make_timer(self):
-        self.timeLeft = 18
+        self.timeLeft = 180
         self.clock = Label(self.frame1, text= self.timeLeft)
         self.clock.grid(row= 0, columnspan= 4)
             
@@ -101,7 +102,7 @@ class GuiPart:
                 try:
                     if value in self.solutions:
                         self.userWords.insert(END, value)
-                        self.user_points += game.score_word(value, self.solutions)
+                        self.user_points += game.score_word(self.solutions, value)
                         self.solutions.remove(value)
                         self.user_score.config(text= self.user_points)
                 except ValueError:
@@ -115,8 +116,8 @@ class GuiPart:
             while self.line.qsize():
                 try:
                     msg = self.line.get(0)
-                    self.select.insert(END, msg)
-                    result = game.score_word(*msg, self.solutions)
+                    self.select.insert(END, *msg)
+                    result = game.score_word(self.solutions, *msg)
                     self.cpu_points += result
                     self.cpu_score.config(text= self.cpu_points)
                     self.solutions.remove(*msg)
@@ -156,6 +157,7 @@ class threadedClient:
         self.board = game.make_board()
         self.solutions = game.solver(self.board)
         self.line = queue.Queue()
+        self.lock = threading.Lock()
         self.timer = False
         self.gui = GuiPart(master, self.line, self.board, self.solutions)
         self.running = 1
@@ -168,38 +170,39 @@ class threadedClient:
         self.updateGUI()
         
     def updateGUI(self):
-        self.gui.processUpdate()
-        if self.timer:
-            self.running = self.gui.countDown()
-            self.timer = False
-            
-        if not self.running:
-            self.exit_flag.set()
-            again = messagebox.askyesno("Continue", "Play again?")
-            if not again:
-                self.endApplication()
-                sys.exit(0)
-            self.reset()
-        self.master.after(100, self.updateGUI)
+        with self.lock:
+            self.gui.processUpdate()
+            if self.timer:
+                self.running = self.gui.countDown()
+                self.timer = False
+                
+            if not self.running:
+                self.exit_flag.set()
+                again = messagebox.askyesno("Continue", "Play again?")
+                if not again:
+                    self.endApplication()
+                    sys.exit(0)
+                self.reset()
+            self.master.after(100, self.updateGUI)
         
     def aiThread1(self):            
         DELAY = 10
         while not self.exit_flag.wait(timeout=DELAY):
-            print(self.exit_flag)
             #time.sleep(10)
-            import random
-            try:
-                rValue = random.sample(self.solutions, 1)
-                self.line.put(rValue)
-                self.gui.processUpdate()
-            except ValueError:
-                #all values have been found
-                pass
+            with self.lock:
+                try:
+                    rValue = random.sample(self.solutions, 1)
+                    self.line.put(rValue)
+                    self.gui.processUpdate()
+                except ValueError:
+                    #all values have been found
+                    pass
     
     def clockThread2(self):
         DELAY = 1
         while not self.exit_flag.wait(timeout=DELAY):
-            self.timer = True
+            with self.lock:
+                self.timer = True
         
                
             #time.sleep(1)
