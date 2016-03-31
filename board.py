@@ -80,17 +80,17 @@ def make_board():
         #    value = value.upper()
         board += value
         y += 1
-    count = 0 
-    for letter in board:
-        if letter.lower() == 'q':
-            print ("Qu", end= "  ") 
-        else:
-            print(letter + " ", end="  ")
-        
-        if count == 4:
-            print()
-            count = -1
-        count += 1
+#     count = 0 
+#     for letter in board:
+#         if letter.lower() == 'q':
+#             print ("Qu", end= "  ") 
+#         else:
+#             print(letter + " ", end="  ")
+#         
+#         if count == 4:
+#             print()
+#             count = -1
+#         count += 1
     return board
 
 # class Path(object):
@@ -155,7 +155,7 @@ def solver(board):
     alphabet = ''.join(set(''.join(grid)))
     if 'q' in alphabet:
         alphabet += 'u'
-        print(alphabet)
+#         print(alphabet)
     bogglable = re.compile('[' + alphabet + ']{3,}$', re.I).match
     
     words = set(word.rstrip('\n') for word in open('/usr/share/dict/words') if bogglable(word))

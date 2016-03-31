@@ -18,7 +18,7 @@ class GuiPart:
         self.user_points = 0
         self.board = board
         self.cpu_points = 0
-        self.lock = threading.Lock()
+        #self.lock = threading.Lock()
         self.customFont = tkinter.font.Font(family ="Helvetica", size = 12)
         self.frame1 = Frame(win)
         #frame1.pack()
@@ -96,33 +96,33 @@ class GuiPart:
     
     def func(self, event):
         if self.timeLeft:
-            with self.lock:
-                value = self.e.get()
-                value = value.lower()
-                try:
-                    if value in self.solutions:
-                        self.userWords.insert(END, value)
-                        self.user_points += game.score_word(self.solutions, value)
-                        self.solutions.remove(value)
-                        self.user_score.config(text= self.user_points)
-                except ValueError:
-                    # all words have been found
-                    pass
-                self.e.delete(0, 'end')
+            #with self.lock:
+            value = self.e.get()
+            value = value.lower()
+            try:
+                if value in self.solutions:
+                    self.userWords.insert(END, value)
+                    self.user_points += game.score_word(self.solutions, value)
+                    self.solutions.remove(value)
+                    self.user_score.config(text= self.user_points)
+            except ValueError:
+                # all words have been found
+                pass
+            self.e.delete(0, 'end')
             
                 
     def processUpdate(self):
-        with self.lock:
-            while self.line.qsize():
-                try:
-                    msg = self.line.get(0)
-                    self.select.insert(END, *msg)
-                    result = game.score_word(self.solutions, *msg)
-                    self.cpu_points += result
-                    self.cpu_score.config(text= self.cpu_points)
-                    self.solutions.remove(*msg)
-                except queue.Empty:
-                    pass
+        #with self.lock:
+        while self.line.qsize():
+            try:
+                msg = self.line.get(0)
+                self.select.insert(END, *msg)
+                result = game.score_word(self.solutions, *msg)
+                self.cpu_points += result
+                self.cpu_score.config(text= self.cpu_points)
+                self.solutions.remove(*msg)
+            except queue.Empty:
+                pass
 
     def countDown(self):
         self.clock.configure(text= self.timeLeft)
@@ -156,6 +156,7 @@ class threadedClient:
         self.master = master
         self.board = game.make_board()
         self.solutions = game.solver(self.board)
+        self.messageFlag = False
         self.line = queue.Queue()
         self.lock = threading.Lock()
         self.timer = False
@@ -167,10 +168,12 @@ class threadedClient:
         self.thread1.start()
         self.thread2.start()
         self.gui.countDown()
+#         print ( len( self.solutions))
         self.updateGUI()
         
     def updateGUI(self):
         with self.lock:
+#             print("here " + str(len(self.solutions)))
             self.gui.processUpdate()
             if self.timer:
                 self.running = self.gui.countDown()
@@ -186,37 +189,39 @@ class threadedClient:
                 else:
                     message += "You LOST"
                 message += " Play again?"
-                print (message)
+#                 print (message)
+                self.messageFlag = True
                 if not messagebox.askyesno("Continue", message):
                     self.endApplication()
                     sys.exit(0)
                 self.reset()
             self.master.after(100, self.updateGUI)
-        
+    
     def aiThread1(self):            
-        DELAY = 1
+        DELAY = 7
         while not self.exit_flag.wait(timeout=DELAY):
             #time.sleep(10)
             with self.lock:
+#                 print("ai")
                 try:
                     rValue = random.sample(self.solutions, 1)
-                    print (rValue)
-                    if not len(self.solutions):
-                        if messagebox.askyesno("Continue", "All matches found. Play again?"):
-                           self.reset()
-                        self.endApplication()
-                        sys.exit(0)
+#                     print (rValue)
+#                     if not len(self.solutions):
+#                         if messagebox.askyesno("Continue", "All matches found. Play again?"):
+#                            self.reset()
+#                         self.endApplication()
+#                         sys.exit(0)
                     self.line.put(rValue)
-                    self.gui.processUpdate()
+                    #self.gui.processUpdate() #BAD  tk cannot handle calls from multiple threads
                 except ValueError:
                     #all values have been found
                     self.running = 0
-                    pass
     
     def clockThread2(self):
         DELAY = 1
         while not self.exit_flag.wait(timeout=DELAY):
             with self.lock:
+#                 print("clock")
                 self.timer = True
         
                
@@ -244,11 +249,12 @@ def main():
     ai = threadedClient(win)
     
     def on_closing():
-        ai.endApplication()
-        for word in ai.solutions:
-            print(word, end= ' ')
-        print()
-        win.destroy()
+        if not ai.messageFlag:
+            ai.endApplication()
+            for word in ai.solutions:
+                print(word, end= ' ')
+            print()
+            win.destroy()
     win.protocol("WM_DELETE_WINDOW", on_closing)
     win.wm_title("Boggle-ish")
     mainloop()
