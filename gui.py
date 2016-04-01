@@ -182,7 +182,7 @@ class threadedClient:
             if not self.running:
                 self.exit_flag.set()
                 message = ''
-                if self.gui.timeLeft:
+                if not self.gui.timeLeft == -1:
                     message += "All words found. "
                 if self.gui.user_points > self.gui.cpu_points:
                     message += "You WON!!"
@@ -251,8 +251,8 @@ def main():
     def on_closing():
         if not ai.messageFlag:
             ai.endApplication()
-            for word in ai.solutions:
-                print(word, end= ' ')
+#             for word in ai.solutions:
+#                 print(word, end= ' ')
             print()
             win.destroy()
     win.protocol("WM_DELETE_WINDOW", on_closing)
