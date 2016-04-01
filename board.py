@@ -33,33 +33,24 @@ def score_word(s, word):
 #     return False
 
 def make_board():
-    dice = ['aaafrs',
-            'aaeeee',
-            'aafirs',
-            'adennn',
-            'aeeeem',
-            'aeegmu',
-            'aegmnn',
-            'afirsy',
-            'bjkqxz',
-            'ccenst',
-            'ceiilt',
-            'ceilpt',
-            'ceipst',
-            'ddhnot',
-            'dhhlor',
-            'dhlnor',
-            'dhlnor', #(duplicate)
-            'eiiitt',
-            'emottt',
-            'ensssu',
-            'fiprsy',
-            'gorrvw',
-            'iprrry',
-            'nootuw',
-            'ooottu',
-            'qqqqqq', # test
-            'iklmqu']
+    #distribution for classic boggle game 1987~2008
+    # found www.bananagrammer.com/2013/10/the-boggle-cube-redesign-and-its-effect.html
+    dice = ['aaciot',
+            'abilty',
+            'abjmoq',
+            'acdemp',
+            'acelrs',
+            'adenvz',
+            'ahmors',
+            'biforx',
+            'denosw',
+            'dknotu',
+            'eefhiy',
+            'egkluy',
+            'egintv',
+            'ehinps',
+            'elpstu',
+            'gilruw']
     
     import random
     import time
